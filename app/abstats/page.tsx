@@ -378,6 +378,13 @@ export default function ABStatsPage() {
   const [testRunning, setTestRunning] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
+  // B flow has its own state — same prompts, different webhook (no
+  // expected_endpoint field — B's regex router determines endpoint
+  // deterministically and rows are tagged flow_tag="B" automatically).
+  const [bTestPrompt, setBTestPrompt] = useState(TEST_PROMPTS[0].label);
+  const [bTestRunning, setBTestRunning] = useState(false);
+  const [bTestResult, setBTestResult] = useState<string | null>(null);
+
   async function load(bid?: string) {
     setLoading(true);
     setError(null);
@@ -433,6 +440,33 @@ export default function ABStatsPage() {
       setTestResult("ERROR: " + (e instanceof Error ? e.message : String(e)));
     } finally {
       setTestRunning(false);
+    }
+  }
+
+  async function runBTest() {
+    setBTestRunning(true);
+    setBTestResult(null);
+    try {
+      // /api/chat → n8n B flow webhook. B's Normalize Request reads chatInput
+      // (string) or question, and tags the sim_run row with flow_tag="B" via
+      // run_meta. No expected_endpoint — regex router picks the endpoint.
+      const r = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ chatInput: bTestPrompt }),
+      });
+      const text = await r.text();
+      let pretty = text;
+      try {
+        const j = JSON.parse(text);
+        pretty = JSON.stringify(j, null, 2);
+      } catch {/* keep raw */}
+      setBTestResult(`HTTP ${r.status}\n\n${pretty}`);
+      setTimeout(load, 1500);
+    } catch (e: unknown) {
+      setBTestResult("ERROR: " + (e instanceof Error ? e.message : String(e)));
+    } finally {
+      setBTestRunning(false);
     }
   }
 
@@ -555,9 +589,8 @@ export default function ABStatsPage() {
             <h3 style={{ margin: "0 0 8px" }}>Trigger A flow test query</h3>
             <p style={{ fontSize: 13, color: "#666", margin: "0 0 12px" }}>
               Sends the prompt to the A flow webhook with an{" "}
-              <code>expected_endpoint</code> label so endpoint-match can be scored. To test B flow,
-              use the existing chat router (rows already inserted automatically with{" "}
-              <code>flow_tag=&quot;B&quot;</code>).
+              <code>expected_endpoint</code> label so endpoint-match can be scored.
+              See the B flow tester below to inject a single B-flow run for comparison.
             </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <select
@@ -603,6 +636,46 @@ export default function ABStatsPage() {
                 maxHeight: 240, overflow: "auto",
               }}>
                 {testResult}
+              </pre>
+            )}
+          </div>
+
+          {/* Trigger B flow test */}
+          <div style={{
+            marginTop: 16, padding: 16, border: "1px solid #ccc",
+            borderRadius: 8, background: "#fafafa",
+          }}>
+            <h3 style={{ margin: "0 0 8px" }}>Trigger B flow test query</h3>
+            <p style={{ fontSize: 13, color: "#666", margin: "0 0 12px" }}>
+              Sends the same prompt to the B flow webhook (Chat Query Router).
+              Regex router determines the endpoint — no <code>expected_endpoint</code> needed.
+              Row is auto-tagged <code>flow_tag=&quot;B&quot;</code> by the workflow.
+            </p>
+            <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
+              <select
+                value={bTestPrompt}
+                onChange={(e) => setBTestPrompt(e.target.value)}
+                style={{ padding: 6, minWidth: 320 }}
+              >
+                {TEST_PROMPTS.map((p) => (
+                  <option key={p.label} value={p.label}>{p.label}</option>
+                ))}
+              </select>
+              <button
+                onClick={runBTest}
+                disabled={bTestRunning}
+                style={{ padding: "6px 16px", cursor: "pointer" }}
+              >
+                {bTestRunning ? "Running..." : "Send to B"}
+              </button>
+            </div>
+            {bTestResult && (
+              <pre style={{
+                marginTop: 12, padding: 8, background: "#fff",
+                border: "1px solid #ddd", fontSize: 12,
+                maxHeight: 240, overflow: "auto",
+              }}>
+                {bTestResult}
               </pre>
             )}
           </div>
