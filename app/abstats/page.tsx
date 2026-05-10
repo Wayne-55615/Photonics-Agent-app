@@ -373,8 +373,6 @@ export default function ABStatsPage() {
 
   // For triggering test queries
   const [testPrompt, setTestPrompt] = useState(TEST_PROMPTS[0].label);
-  const [testExpected, setTestExpected] = useState(TEST_PROMPTS[0].endpoint);
-  const [testIncludeExpected, setTestIncludeExpected] = useState(true);
   const [testRunning, setTestRunning] = useState(false);
   const [testResult, setTestResult] = useState<string | null>(null);
 
@@ -417,15 +415,9 @@ export default function ABStatsPage() {
       const r = await fetch(A_FLOW_URL, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: testPrompt,
-          // include expected_endpoint only when toggle is on — otherwise the
-          // run is "unguided" (system prompt + tool descriptions only) and
-          // counts in the A_unguided bucket.
-          ...(testIncludeExpected && testExpected
-            ? { expected_endpoint: testExpected }
-            : {}),
-        }),
+        // Always unguided — system prompt + tool descriptions drive the LLM,
+        // no expected_endpoint hint. Row goes into the A_unguided bucket.
+        body: JSON.stringify({ message: testPrompt }),
       });
       const text = await r.text();
       let pretty = text;
@@ -588,45 +580,27 @@ export default function ABStatsPage() {
           }}>
             <h3 style={{ margin: "0 0 8px" }}>Trigger A flow test query</h3>
             <p style={{ fontSize: 13, color: "#666", margin: "0 0 12px" }}>
-              Sends the prompt to the A flow webhook with an{" "}
-              <code>expected_endpoint</code> label so endpoint-match can be scored.
-              See the B flow tester below to inject a single B-flow run for comparison.
+              Sends the prompt to the A flow webhook (LLM agent + HTTP tools).
+              The LLM picks the tool from system prompt + tool descriptions only —
+              no <code>expected_endpoint</code> hint. Row is auto-tagged{" "}
+              <code>flow_tag=&quot;A&quot;</code>.
             </p>
             <div style={{ display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
               <select
                 value={testPrompt}
-                onChange={(e) => {
-                  const choice = TEST_PROMPTS.find((p) => p.label === e.target.value);
-                  setTestPrompt(e.target.value);
-                  if (choice) setTestExpected(choice.endpoint);
-                }}
+                onChange={(e) => setTestPrompt(e.target.value)}
                 style={{ padding: 6, minWidth: 320 }}
               >
                 {TEST_PROMPTS.map((p) => (
                   <option key={p.label} value={p.label}>{p.label}</option>
                 ))}
               </select>
-              <label style={{ fontSize: 13, display: "flex", alignItems: "center", gap: 4 }}>
-                <input
-                  type="checkbox"
-                  checked={testIncludeExpected}
-                  onChange={(e) => setTestIncludeExpected(e.target.checked)}
-                />
-                guided
-              </label>
-              <input
-                value={testExpected}
-                onChange={(e) => setTestExpected(e.target.value)}
-                placeholder="expected_endpoint (for scoring)"
-                disabled={!testIncludeExpected}
-                style={{ flex: 1, padding: 6, minWidth: 280, fontSize: 13, opacity: testIncludeExpected ? 1 : 0.5 }}
-              />
               <button
                 onClick={runATest}
                 disabled={testRunning}
                 style={{ padding: "6px 16px", cursor: "pointer" }}
               >
-                {testRunning ? "Running..." : (testIncludeExpected ? "Send to A (guided)" : "Send to A (unguided)")}
+                {testRunning ? "Running..." : "Send to A"}
               </button>
             </div>
             {testResult && (
