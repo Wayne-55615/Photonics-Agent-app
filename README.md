@@ -37,10 +37,10 @@ The default values in `.env.local.example` assume the standard local stack:
 
 ## Environment variables
 
-See [`.env.local.example`](./.env.local.example) for the full list. Two-tier convention:
-
-* `NEXT_PUBLIC_*` — exposed to the browser (chat webhook, A flow URL)
-* others — server-side only (IPKISS / Ollama / Postgres / filesystem paths)
+See [`.env.local.example`](./.env.local.example) for the full list. All
+backend URLs are server-side only — the browser only ever hits this Next.js
+process. Chat traffic flows: `browser → /api/chat → n8n`. /abstats test query
+flows: `browser → /api/a-chat → n8n`.
 
 ## Deploying to Vercel
 
@@ -92,13 +92,19 @@ In **Vercel → Project → Settings → Environment Variables**, set:
 
 | Variable | Value |
 |---|---|
-| `NEXT_PUBLIC_N8N_WEBHOOK_URL` | `https://n8n.example.com/webhook/invoke_n8n_agent` |
-| `NEXT_PUBLIC_A_FLOW_URL` | `https://n8n.example.com/webhook/a/agent-chat` |
+| `N8N_WEBHOOK_URL` | `https://n8n.example.com/webhook/invoke_n8n_agent` |
+| `N8N_A_FLOW_URL` | `https://n8n.example.com/webhook/a/agent-chat` |
 | `N8N_URL` | `https://n8n.example.com` |
 | `IPKISS_URL` | `https://ipkiss.example.com` |
 | `OLLAMA_URL` | `https://ollama.example.com` |
 | `GDS_API_URL` | `https://gds.example.com` |
 | `DATABASE_URL` | `postgres://user:pass@your-db-host/db` (use a tunneled or cloud DB) |
+
+> **Self-host alternative**: instead of Vercel, build this app into a docker
+> image and run it next to n8n / IPKISS / Ollama / GDS API on the same docker
+> network. Then `N8N_WEBHOOK_URL=http://n8n:5678/webhook/...` etc. and only
+> the frontend container needs a public Cloudflare Tunnel hostname. This is
+> the cleanest way to keep all backends fully private.
 
 `/api/results` reads files directly from the local Windows filesystem
 (`D:/photonic-platform/...`) and **won't work on Vercel** unless you mount

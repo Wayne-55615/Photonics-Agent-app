@@ -467,11 +467,11 @@ function findSpectrumPngFilename(out: SimOutput | null): string | null {
   return raw.replace(/.*[/\\]/, "");
 }
 
-// B flow webhook — overridable via NEXT_PUBLIC_N8N_WEBHOOK_URL so the same
-// build can point at localhost in dev, a tunnel URL on Vercel, etc.
-const WEBHOOK =
-  process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL ??
-  "http://localhost:5678/webhook/invoke_n8n_agent";
+// B flow webhook — proxied through our own /api/chat so the browser never
+// talks to n8n directly. The actual upstream URL is configured server-side
+// via N8N_WEBHOOK_URL (see app/api/chat/route.ts), which lets n8n stay on a
+// docker-internal network and not be exposed publicly.
+const WEBHOOK = "/api/chat";
 
 // ── Example command library (grouped, collapsible) ───────────────────────────
 const EXAMPLE_GROUPS: { label: string; items: { value: string; label: string; section?: string }[] }[] = [

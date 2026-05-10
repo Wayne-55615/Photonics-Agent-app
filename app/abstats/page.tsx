@@ -124,8 +124,9 @@ const TEST_PROMPTS = [
   },
 ];
 
-const A_FLOW_URL =
-  process.env.NEXT_PUBLIC_A_FLOW_URL ?? "http://localhost:5678/webhook/a/agent-chat";
+// Proxied through our own /api/a-chat so the browser never sees the n8n URL.
+// Upstream resolved server-side from N8N_A_FLOW_URL (see app/api/a-chat/route.ts).
+const A_FLOW_URL = "/api/a-chat";
 
 function pct(n: number | null): string {
   if (n == null) return "—";
