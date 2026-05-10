@@ -8,6 +8,9 @@ import type { NextConfig } from "next";
 const GDS_API_URL = process.env.GDS_API_URL ?? "http://localhost:8200";
 
 const nextConfig: NextConfig = {
+  // Standalone output produces .next/standalone with a self-contained Node
+  // server — used by the Docker image so we don't have to ship node_modules.
+  output: "standalone",
   async rewrites() {
     return [
       {
