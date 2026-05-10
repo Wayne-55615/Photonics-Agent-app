@@ -1,0 +1,53 @@
+# Example: integrate this Next.js frontend into the photonic-platform docker
+# stack so the browser hits ONLY the frontend hostname (n8n / postgres /
+# gds-load-api stay on the private docker network).
+#
+# Usage: append this `photonic-frontend` block to your existing
+# n8n/docker-compose.yaml (the one that already runs n8n, postgres, etc.),
+# then `docker compose up -d photonic-frontend --build`.
+#
+# Cloudflare Tunnel: add ONE Public Hostname pointing at localhost:3100,
+# nothing else needs to be exposed.
+
+services:
+  photonic-frontend:
+    build: ../frontend          # path to this repo's checkout
+    image: photonic-frontend
+    container_name: photonic-frontend
+    restart: unless-stopped
+    ports:
+      - "3100:3000"             # host:3100 → container:3000 (Next.js default)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # reach IPKISS / Ollama on host
+    environment:
+      # /api/chat / /api/a-chat proxy upstreams — internal docker hostnames
+      N8N_WEBHOOK_URL: http://n8n:5678/webhook/invoke_n8n_agent
+      N8N_A_FLOW_URL:  http://n8n:5678/webhook/a/agent-chat
+      N8N_URL:         http://n8n:5678
+      # Services NOT in docker (running on host) → host.docker.internal
+      IPKISS_URL:  http://host.docker.internal:8000
+      OLLAMA_URL:  http://host.docker.internal:11434
+      # Services on same docker network
+      GDS_API_URL: http://gds-load-api:8200
+      DATABASE_URL: postgres://${DB_USER}:${DB_PASSWORD}@postgres:5432/${DB_NAME}
+      # /api/results reads from a mounted results volume; AB_BATCH_LOG too
+      RESULTS_DIRS: /results
+      AB_BATCH_LOG: /scripts/ab_batch.jsonl
+    volumes:
+      - results:/results:ro
+      - ../scripts:/scripts:ro
+    networks:
+      - internal
+    depends_on:
+      - n8n
+      - postgres
+      - gds-load-api
+
+# Reuses volumes + network defined in the main n8n compose:
+volumes:
+  results:
+    external: true
+networks:
+  internal:
+    external: true
+    name: n8n_internal

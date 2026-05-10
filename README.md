@@ -100,11 +100,22 @@ In **Vercel → Project → Settings → Environment Variables**, set:
 | `GDS_API_URL` | `https://gds.example.com` |
 | `DATABASE_URL` | `postgres://user:pass@your-db-host/db` (use a tunneled or cloud DB) |
 
-> **Self-host alternative**: instead of Vercel, build this app into a docker
-> image and run it next to n8n / IPKISS / Ollama / GDS API on the same docker
-> network. Then `N8N_WEBHOOK_URL=http://n8n:5678/webhook/...` etc. and only
-> the frontend container needs a public Cloudflare Tunnel hostname. This is
-> the cleanest way to keep all backends fully private.
+> **Self-host alternative (recommended)**: instead of Vercel, build this app
+> into a docker image and run it next to n8n / IPKISS / Ollama / GDS API on
+> the same docker network. Then `N8N_WEBHOOK_URL=http://n8n:5678/webhook/...`
+> etc. and only the frontend container needs a public Cloudflare Tunnel
+> hostname. This is the cleanest way to keep all backends fully private.
+>
+> See [`docker-compose.example.yaml`](./docker-compose.example.yaml) for the
+> service block to append to your existing `n8n/docker-compose.yaml`. Then:
+>
+> ```bash
+> docker compose up -d photonic-frontend --build
+> ```
+>
+> Tested in production: container reaches `n8n:5678` / `gds-load-api:8200`
+> via docker bridge, `host.docker.internal:8000` for IPKISS API, etc.
+> Single Cloudflare Tunnel public hostname → `localhost:3100` covers it all.
 
 `/api/results` reads files directly from the local Windows filesystem
 (`D:/photonic-platform/...`) and **won't work on Vercel** unless you mount
