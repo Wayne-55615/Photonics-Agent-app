@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const GDS_API = "http://localhost:8200";
+const GDS_API = process.env.GDS_API_URL ?? "http://localhost:8200";
 
 export async function GET(
   _req: Request,

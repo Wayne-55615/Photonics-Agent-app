@@ -11,8 +11,10 @@ export const dynamic = "force-dynamic";
 function readBatchLatency(): Record<string, { avg: number | null; max: number | null; count: number }> {
   const out: Record<string, { sum: number; max: number; count: number }> = {};
   try {
-    // Project root → scripts/ab_batch.jsonl
+    // Project root → scripts/ab_batch.jsonl. Override via AB_BATCH_LOG env
+    // for deploys where the working directory differs.
     const candidates = [
+      ...(process.env.AB_BATCH_LOG ? [process.env.AB_BATCH_LOG] : []),
       path.resolve(process.cwd(), "..", "scripts", "ab_batch.jsonl"),
       path.resolve(process.cwd(), "scripts", "ab_batch.jsonl"),
       "D:/photonic-platform/scripts/ab_batch.jsonl",

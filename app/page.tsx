@@ -467,7 +467,11 @@ function findSpectrumPngFilename(out: SimOutput | null): string | null {
   return raw.replace(/.*[/\\]/, "");
 }
 
-const WEBHOOK = "http://localhost:5678/webhook/invoke_n8n_agent";
+// B flow webhook — overridable via NEXT_PUBLIC_N8N_WEBHOOK_URL so the same
+// build can point at localhost in dev, a tunnel URL on Vercel, etc.
+const WEBHOOK =
+  process.env.NEXT_PUBLIC_N8N_WEBHOOK_URL ??
+  "http://localhost:5678/webhook/invoke_n8n_agent";
 
 // ── Example command library (grouped, collapsible) ───────────────────────────
 const EXAMPLE_GROUPS: { label: string; items: { value: string; label: string; section?: string }[] }[] = [

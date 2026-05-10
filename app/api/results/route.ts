@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const RESULTS_DIRS = [
-  path.resolve("D:/photonic-platform/ipkiss-api/results"),
-  path.resolve("D:/photonic-platform/ipkiss-api/results_test_dc"),
-];
+// RESULTS_DIRS: comma-separated absolute paths to IPKISS results dirs.
+// Default targets the local Windows install; override on Vercel/cloud
+// deploys where the host filesystem differs (or use IPKISS_RESULTS_URL
+// to fetch over HTTP from a tunneled IPKISS API instead).
+const RESULTS_DIRS = (process.env.RESULTS_DIRS
+  ?? "D:/photonic-platform/ipkiss-api/results,D:/photonic-platform/ipkiss-api/results_test_dc")
+  .split(",").map((d) => path.resolve(d.trim())).filter(Boolean);
 
 export async function GET() {
   try {

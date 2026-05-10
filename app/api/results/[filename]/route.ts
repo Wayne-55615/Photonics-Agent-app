@@ -2,10 +2,12 @@ import { NextResponse } from "next/server";
 import fs from "fs";
 import path from "path";
 
-const RESULTS_DIRS = [
-  path.resolve("D:/photonic-platform/ipkiss-api/results"),
-  path.resolve("D:/photonic-platform/ipkiss-api/results_test_dc"),
-];
+// RESULTS_DIRS: comma-separated absolute paths. Override via env on cloud
+// deploys (Vercel can't read D:/ from the local Windows host — set this
+// to a mounted/synced location or use IPKISS_RESULTS_URL as HTTP fallback).
+const RESULTS_DIRS = (process.env.RESULTS_DIRS
+  ?? "D:/photonic-platform/ipkiss-api/results,D:/photonic-platform/ipkiss-api/results_test_dc")
+  .split(",").map((d) => path.resolve(d.trim())).filter(Boolean);
 
 const MIME: Record<string, string> = {
   ".s2p":  "text/plain",
