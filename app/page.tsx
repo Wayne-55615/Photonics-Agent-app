@@ -4049,8 +4049,26 @@ export default function Home() {
         const selCase = d.selected_case as Record<string, unknown> | undefined;
         const synth = synthesizeSimOutputFromCase(selCase ?? null);
         if (synth) setLastSimOut(synth);
-        const snpFile = findSnpFromCase(selCase);
-        if (snpFile) void loadSnpFile(snpFile);
+        // findSnpFromCase derives one filename from optical_function.ports.length;
+        // when that's wrong (or missing) we'd silently 404. Probe the other
+        // port counts sequentially so the spectrum still shows up.
+        const primarySnp = findSnpFromCase(selCase);
+        const gdsName = typeof selCase?.gds_filename === "string"
+          ? selCase.gds_filename.replace(/.*[/\\]/, "").replace(/\.gds$/i, "")
+          : null;
+        const candidates = [
+          primarySnp,
+          ...(gdsName ? [`${gdsName}.s2p`, `${gdsName}.s3p`, `${gdsName}.s4p`, `${gdsName}.s8p`] : []),
+        ].filter((x): x is string => !!x);
+        const seen = new Set<string>();
+        void (async () => {
+          for (const c of candidates) {
+            if (seen.has(c)) continue;
+            seen.add(c);
+            const ok = await loadSnpFile(c);
+            if (ok) return;
+          }
+        })();
       }
 
       setMessages((m) => [...m, { id: ++idRef.current, role: "bot", text: q, response: data }]);
