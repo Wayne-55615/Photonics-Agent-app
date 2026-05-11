@@ -492,8 +492,13 @@ const EXAMPLE_GROUPS: { label: string; items: { value: string; label: string; se
   {
     label: "MMI",
     items: [
-      { value: "find similar MMI 1x2 width 12 length 30 wl_start 1.5 wl_stop 1.6 n_points 51", label: "MMI 1×2 · 12×30 µm" },
-      { value: "find similar MMI 2x2 width 12 length 60 wl_start 1.5 wl_stop 1.6 n_points 51", label: "MMI 2×2 · 12×60 µm" },
+      // MMI1x2Optimized* (and 1310/FDTD variants) are PDK PCells with locked
+      // body width / length / taper — sweep range + n_points are the only
+      // adjustable inputs. Showing width/length here would silently get
+      // ignored by IPKISS and mislead the user.
+      { value: "find similar MMI 1x2 wl_start 1.5 wl_stop 1.6 n_points 101", label: "MMI 1×2 · 1.5–1.6 µm · 101 pts" },
+      { value: "find similar MMI 2x2 wl_start 1.5 wl_stop 1.6 n_points 101", label: "MMI 2×2 · 1.5–1.6 µm · 101 pts" },
+      { value: "force simulate MMI mmi_type MMI1x2Optimized1550 wl_start 1.50 wl_stop 1.60 n_points 1001", label: "Force · MMI1x2Optimized1550 · fine sweep" },
     ],
   },
   {
