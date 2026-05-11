@@ -492,13 +492,13 @@ const EXAMPLE_GROUPS: { label: string; items: { value: string; label: string; se
   {
     label: "MMI",
     items: [
-      // MMI1x2Optimized* (and 1310/FDTD variants) are PDK PCells with locked
-      // body width / length / taper — sweep range + n_points are the only
-      // adjustable inputs. Showing width/length here would silently get
-      // ignored by IPKISS and mislead the user.
-      { value: "find similar MMI 1x2 wl_start 1.5 wl_stop 1.6 n_points 101", label: "MMI 1×2 · 1.5–1.6 µm · 101 pts" },
-      { value: "find similar MMI 2x2 wl_start 1.5 wl_stop 1.6 n_points 101", label: "MMI 2×2 · 1.5–1.6 µm · 101 pts" },
+      // PDK only ships MMI1x2 variants (MMI1x2 / MMI1x2Optimized1550 / 1310 /
+      // 1550FDTD). All are PCells with locked body width / length / taper —
+      // sweep range + n_points + mmi_type are the only adjustable inputs.
+      // Showing width/length here would silently get ignored by IPKISS.
+      { value: "find similar MMI 1x2 wl_start 1.5 wl_stop 1.6 n_points 101", label: "MMI 1×2 · 1.5–1.6 µm · 101 pts (lookup)" },
       { value: "force simulate MMI mmi_type MMI1x2Optimized1550 wl_start 1.50 wl_stop 1.60 n_points 1001", label: "Force · MMI1x2Optimized1550 · fine sweep" },
+      { value: "force simulate MMI mmi_type MMI1x2Optimized1310 wl_start 1.26 wl_stop 1.36 n_points 1001", label: "Force · MMI1x2Optimized1310 · O-band" },
     ],
   },
   {
