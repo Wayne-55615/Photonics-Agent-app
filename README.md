@@ -142,3 +142,27 @@ Every push to `main` triggers a fresh build + deploy.
 * `components/SnpChart.tsx` is the main spectrum chart; `SnpHtmlViewer.tsx`
   is the standalone variant for `/spectrum/<filename>`.
 * Bilingual UI labels (`中文 / English`) — see strings in pages and components.
+
+## Operational scripts
+
+| Script | Purpose |
+|---|---|
+| `scripts/backfill_spectrum_png.mjs` | Walks every `.sNp` in the IPKISS results dir; for files without a sibling `<prefix>_spectrum.png`, calls `POST /ipkiss/spectrum/render_from_snp` to generate one. Run once after enabling the backfill feature so older parameter-sweep batches (which had `sa_plot=False`) get spectrum previews. |
+
+Quick usage:
+
+```bash
+# dry-run first to see how many would be rendered
+node scripts/backfill_spectrum_png.mjs --dry-run
+
+# do everything (sequential, ~3.7 renders/sec)
+node scripts/backfill_spectrum_png.mjs
+
+# bound it for testing
+node scripts/backfill_spectrum_png.mjs --limit 10 --verbose
+```
+
+Requires the IPKISS API server to expose `/ipkiss/spectrum/render_from_snp`
+(see `ipkiss-api/spectrum_render.py` and the route registration in
+`ipkiss-api/server.py`). On a fresh checkout those live in the backend
+repo; restart `python server.py` after pulling changes there.
