@@ -4048,7 +4048,18 @@ export default function Home() {
         // file links, sNp viewer) renders identically to a simulation result.
         const selCase = d.selected_case as Record<string, unknown> | undefined;
         const synth = synthesizeSimOutputFromCase(selCase ?? null);
-        if (synth) setLastSimOut(synth);
+        // synth always sets spectrum_png_path / files based on the gds basename
+        // even when those sibling files weren't actually written to disk (older
+        // runs only wrote .gds + .s3p, no _spectrum.png). Probe before setting
+        // so SpectrumPngSlot doesn't render a broken-image placeholder.
+        if (synth) {
+          if (synth.spectrum_png_path) {
+            const png = String(synth.spectrum_png_path).replace(/.*[/\\]/, "");
+            const ok = await probeResults(png);
+            if (!ok) synth.spectrum_png_path = undefined;
+          }
+          setLastSimOut(synth);
+        }
         // findSnpFromCase derives one filename from optical_function.ports.length;
         // when that's wrong (or missing) we'd silently 404. Probe the other
         // port counts sequentially so the spectrum still shows up.
